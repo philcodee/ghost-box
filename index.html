@@ -1663,6 +1663,38 @@
       if (echoSynced) wavEchoRateVal.textContent = rateSlider.value + 'ms (sync)';
     });
 
+    // ── Mobile audio unlock ───────────────────────────────────────────────────
+
+    function unlockAudio() {
+      if (!ctx) {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = parseInt(volSlider.value) / 100;
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        masterGain.connect(analyser);
+        analyser.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+
+      // iOS requires speechSynthesis to be triggered from a direct user gesture
+      if (typeof speechSynthesis !== 'undefined') {
+        const sil = new SpeechSynthesisUtterance('');
+        sil.volume = 0;
+        speechSynthesis.speak(sil);
+        speechSynthesis.cancel();
+      }
+    }
+
+    document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+    document.addEventListener('click',      unlockAudio, { once: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    });
+
     startViz();
   </script>
 </body>
