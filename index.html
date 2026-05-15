@@ -1659,13 +1659,13 @@
     async function unlockAudio() {
       await ensureCtx();
 
-      // iOS requires speechSynthesis to be triggered from a direct user gesture
-      if (typeof speechSynthesis !== 'undefined') {
-        const sil = new SpeechSynthesisUtterance('');
-        sil.volume = 0;
-        speechSynthesis.speak(sil);
-        speechSynthesis.cancel();
-      }
+      // iOS requires playing an actual (silent) buffer within the gesture to fully unlock Web Audio.
+      // resume() alone is not sufficient — the context stays muted until a source node fires.
+      const silBuf = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const silSrc = ctx.createBufferSource();
+      silSrc.buffer = silBuf;
+      silSrc.connect(ctx.destination);
+      silSrc.start(0);
     }
 
     document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
