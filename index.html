@@ -964,11 +964,11 @@
       draw();
     }
 
-    function startScan() {
+    async function startScan() {
       if (!ctx) {
         ctx = new (window.AudioContext || window.webkitAudioContext)();
       }
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') await ctx.resume();
 
       masterGain = ctx.createGain();
       masterGain.gain.value = parseInt(volSlider.value) / 100;
@@ -1261,17 +1261,8 @@
       formantNodes = [...base.nodes, ...shifted.nodes, env];
     }
 
-    function speakPhrase() {
-      if (!ctx) {
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        masterGain = ctx.createGain();
-        masterGain.gain.value = parseInt(volSlider.value) / 100;
-        analyser = ctx.createAnalyser();
-        analyser.fftSize = 2048;
-        masterGain.connect(analyser);
-        analyser.connect(ctx.destination);
-      }
-      if (ctx.state === 'suspended') ctx.resume();
+    async function speakPhrase() {
+      await ensureCtx();
 
       speechSynthesis.cancel();
       driftF1 = parseFloat(f1Slider.value);
@@ -1330,9 +1321,9 @@
 
     // ── Main controls ──────────────────────────────────────────────────────────
 
-    playBtn.addEventListener('click', () => {
+    playBtn.addEventListener('click', async () => {
       if (scanning) stopScan();
-      else          startScan();
+      else          await startScan();
     });
 
     dirBtn.addEventListener('click', () => {
@@ -1397,7 +1388,7 @@
     let currentRingOsc = null;
     let crackleNodes   = [];
 
-    function ensureCtx() {
+    async function ensureCtx() {
       if (!ctx) {
         ctx = new (window.AudioContext || window.webkitAudioContext)();
         masterGain = ctx.createGain();
@@ -1407,7 +1398,7 @@
         masterGain.connect(analyser);
         analyser.connect(ctx.destination);
       }
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') await ctx.resume();
     }
 
     function buildWavFX() {
@@ -1449,7 +1440,7 @@
     }
 
     async function loadWavs() {
-      ensureCtx();
+      await ensureCtx();
       if (!wavRadioHP) buildWavFX();
       loadWavBtn.textContent = 'LOADING...';
       loadWavBtn.disabled = true;
@@ -1552,9 +1543,9 @@
       stopCrackle();
     }
 
-    function scheduleSequence(buffers) {
+    async function scheduleSequence(buffers) {
       stopCurrent();
-      ensureCtx();
+      await ensureCtx();
       if (!wavRadioHP) buildWavFX();
 
       const spread = parseInt(wavDetuneSlider.value);
@@ -1592,13 +1583,13 @@
       return wavBuffers[v.dir + '/' + word] || null;
     }
 
-    function playComposed() {
+    async function playComposed() {
       const dir   = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
       const limb  = LIMBS[Math.floor(Math.random() * LIMBS.length)];
       const color = COLORS[Math.floor(Math.random() * COLORS.length)];
       const bufs  = [pickVoiceBuf(dir), pickVoiceBuf(limb), pickVoiceBuf(color)];
       if (bufs.some(b => !b)) return;
-      scheduleSequence(bufs);
+      await scheduleSequence(bufs);
       wavReadout.innerHTML = '<span>' + dir + ' ' + limb + ' ' + color + '</span>';
     }
 
@@ -1665,17 +1656,8 @@
 
     // ── Mobile audio unlock ───────────────────────────────────────────────────
 
-    function unlockAudio() {
-      if (!ctx) {
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        masterGain = ctx.createGain();
-        masterGain.gain.value = parseInt(volSlider.value) / 100;
-        analyser = ctx.createAnalyser();
-        analyser.fftSize = 2048;
-        masterGain.connect(analyser);
-        analyser.connect(ctx.destination);
-      }
-      if (ctx.state === 'suspended') ctx.resume();
+    async function unlockAudio() {
+      await ensureCtx();
 
       // iOS requires speechSynthesis to be triggered from a direct user gesture
       if (typeof speechSynthesis !== 'undefined') {
