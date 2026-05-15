@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghost Box MK3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      background: #0a0a0a;
+      min-height: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      background: #0a0a0a;
+      color: #c8ff00;
+      font-family: 'Share Tech Mono', monospace;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      display: flex;
+      flex-direction: column;
+      padding: 22px 28px;
+    }
+
+    .container {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .header {
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-size: 28px;
+      color: #c8ff00;
+      letter-spacing: 0.1em;
+    }
+
+    .freq-display {
+      background: #1a0000;
+      color: #ff3300;
+      font-family: 'Share Tech Mono', monospace;
+      padding: 22px 22px;
+      line-height: 1.4;
+    }
+
+    .freq-rate {
+      font-size: 15px;
+      opacity: 0.7;
+    }
+
+    .freq-value {
+      font-size: 48px;
+      letter-spacing: 0.05em;
+    }
+
+    .scanner-viz {
+      /* canvas and sweep bar sit flush together */
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 160px;
+      background: #0a0a0a;
+    }
+
+    .sweep-bar-track {
+      width: 100%;
+      height: 2px;
+      background: #0a0a0a;
+    }
+
+    .sweep-bar-fill {
+      height: 2px;
+      width: 0%;
+      background: #ff3300;
+    }
+
+    .main-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 16px;
+      background: #0a0a0a;
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #0a0a0a;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+      gap: 0;
+      background: #0a0a0a;
+      scrollbar-width: none;
+    }
+
+    .right-panel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .panel-section-label {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      color: #555;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 36px;
+      margin-bottom: 0;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .control-label {
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #666;
+    }
+
+    .control-value {
+      font-size: 22px;
+      color: #c8ff00;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #333;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      background: #c8ff00;
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      background: #c8ff00;
+      border: none;
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .transport {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 15px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border: 1px solid currentColor;
+      background: transparent;
+      cursor: pointer;
+      padding: 14px 28px;
+      touch-action: manipulation;
+    }
+
+    #playBtn {
+      color: #c8ff00;
+      border-color: #c8ff00;
+    }
+
+    #playBtn.active {
+      background: #c8ff00;
+      color: #0a0a0a;
+    }
+
+    #dirBtn {
+      color: #ff3300;
+      border-color: #ff3300;
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: #444;
+      letter-spacing: 0.1em;
+    }
+
+    .panel-divider {
+      width: 100%;
+      height: 1px;
+      background: #1e1e1e;
+      margin: 16px 0;
+    }
+
+    .voice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .voice-title {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: #555;
+    }
+
+    #armBtn {
+      color: #555;
+      border-color: #555;
+      font-size: 14px;
+      padding: 10px 18px;
+    }
+
+    #armBtn.armed {
+      color: #ff3300;
+      border-color: #ff3300;
+      background: transparent;
+    }
+
+    .voice-mode-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .voice-mode-label {
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    select {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 15px;
+      background: #0a0a0a;
+      color: #c8ff00;
+      border: 1px solid #333;
+      padding: 10px 14px;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      appearance: none;
+      -webkit-appearance: none;
+      touch-action: manipulation;
+    }
+
+    .voice-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 36px;
+      margin-bottom: 28px;
+    }
+
+    .voice-transport {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .formant-toggle-row {
+      margin-bottom: 10px;
+    }
+
+    #formantToggleBtn {
+      color: #444;
+      border-color: #2a2a2a;
+      font-size: 12px;
+      padding: 7px 14px;
+      letter-spacing: 0.12em;
+    }
+
+    #echoSyncBtn {
+      color: #444;
+      border-color: #2a2a2a;
+      font-size: 11px;
+      padding: 5px 10px;
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+    }
+
+    #echoSyncBtn.synced {
+      color: #c8ff00;
+      border-color: #c8ff00;
+    }
+
+    input[type="range"]:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    #speakBtn,
+    #spinBtn {
+      color: #ff3300;
+      border-color: #ff3300;
+      flex-shrink: 0;
+    }
+
+    #speakBtn:active,
+    #spinBtn:active {
+      background: #ff3300;
+      color: #0a0a0a;
+    }
+
+    #spinBtn:disabled {
+      color: #555;
+      border-color: #555;
+    }
+
+    .voice-readout {
+      font-size: 14px;
+      color: #333;
+      letter-spacing: 0.08em;
+      min-height: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .voice-readout span {
+      color: #ff3300;
+    }
+
+    .formant-divider {
+      width: 100%;
+      height: 1px;
+      background: #1a1a1a;
+      margin: 20px 0 18px;
+    }
+
+    .vowel-presets {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .vowel-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: #555;
+      border-color: #333;
+      padding: 10px 16px;
+    }
+
+    .vowel-btn.active {
+      color: #c8ff00;
+      border-color: #c8ff00;
+    }
+
+    .wav-grid {
+      display: grid;
+      grid-template-columns: 60px repeat(4, 1fr);
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .wav-grid-header {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    .wav-row-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: #444;
+      display: flex;
+      align-items: center;
+    }
+
+    .wav-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid #222;
+      background: transparent;
+      color: #333;
+      cursor: not-allowed;
+      padding: 8px 2px;
+      text-align: center;
+    }
+
+    .wav-btn.loaded {
+      color: #555;
+      border-color: #333;
+      cursor: pointer;
+    }
+
+    .wav-btn.loaded:hover {
+      color: #c8ff00;
+      border-color: #c8ff00;
+    }
+
+    .wav-btn.playing {
+      background: #c8ff00;
+      color: #0a0a0a;
+      border-color: #c8ff00;
+    }
+
+    .wav-col-red    { color: #ff3300; }
+    .wav-col-blue   { color: #4488ff; }
+    .wav-col-yellow { color: #ffcc00; }
+    .wav-col-green  { color: #00cc66; }
+
+    #randomMoveBtn {
+      color: #c8ff00;
+      border-color: #c8ff00;
+    }
+
+    #loadWavBtn {
+      color: #ff3300;
+      border-color: #ff3300;
+      font-size: 14px;
+      padding: 10px 18px;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+
+    @media (max-width: 640px) {
+      body {
+        height: auto;
+        overflow: auto;
+        padding: 18px 16px 40px;
+      }
+
+      .container {
+        flex: none;
+      }
+
+      .header {
+        margin-bottom: 10px;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+        margin-top: 0;
+        gap: 0;
+      }
+
+      .left-panel {
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+
+      .right-panel {
+        overflow-y: visible;
+      }
+
+      .controls,
+      .voice-controls {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .title {
+        font-size: 22px;
+      }
+
+      .freq-value {
+        font-size: 26px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title">GHOST BOX MK3</div>
+    </div>
+
+    <div class="main-grid">
+
+      <!-- ── Left: Scanner ── -->
+      <div class="left-panel">
+        <div class="freq-display">
+          <div class="freq-rate" id="freqRate">FM &nbsp; 800ms</div>
+          <div class="freq-value" id="freqValue">88.1 MHz</div>
+        </div>
+        <div class="scanner-viz">
+          <canvas id="waveform"></canvas>
+          <div class="sweep-bar-track">
+            <div class="sweep-bar-fill" id="sweepBar"></div>
+          </div>
+        </div>
+        <div class="panel-section-label">SCANNER</div>
+        <div class="controls">
+          <div class="control-group">
+            <div class="control-label">Sweep Rate</div>
+            <div class="control-value" id="rateVal">800ms</div>
+            <input type="range" id="rateSlider" min="100" max="2000" step="50" value="800">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Filter</div>
+            <div class="control-value" id="filterVal">1400Hz</div>
+            <input type="range" id="filterSlider" min="400" max="3500" step="50" value="1400">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Volume</div>
+            <div class="control-value" id="volVal">70</div>
+            <input type="range" id="volSlider" min="0" max="100" step="1" value="70">
+          </div>
+        </div>
+        <div class="transport">
+          <button id="playBtn">PLAY</button>
+          <button id="dirBtn">FWD</button>
+          <span class="status-text" id="statusText">READY</span>
+        </div>
+      </div>
+
+      <!-- ── Right: Voice + Twister ── -->
+      <div class="right-panel">
+
+        <!-- Voice inject -->
+        <div class="voice-header">
+          <div class="voice-title">VOICE INJECT</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <button id="voiceNameBtn" style="color:#555;border-color:#333;font-size:12px;padding:7px 14px;letter-spacing:0.08em">—</button>
+            <div class="voice-mode-row" style="margin:0">
+              <div class="voice-mode-label">MODE</div>
+              <select id="modeSelect">
+                <option value="spinner">spinner</option>
+                <option value="sentences">sentences</option>
+                <option value="fragments">fragments</option>
+                <option value="cut-up">cut-up</option>
+                <option value="signal">signal</option>
+                <option value="mixed">mixed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="voiceSelectRow" class="voice-mode-row" style="margin-bottom:10px;display:none">
+          <div class="voice-mode-label">VOICE</div>
+          <select id="voiceSelect" style="flex:1;max-width:340px"><option>loading...</option></select>
+          <button id="voiceSelectClose" style="color:#444;border-color:#333;font-size:12px;padding:7px 14px;margin-left:8px">▴</button>
+        </div>
+
+        <div class="voice-controls">
+          <div class="control-group">
+            <div class="control-label">Pitch</div>
+            <div class="control-value" id="pitchVal">0.80</div>
+            <input type="range" id="pitchSlider" min="0.1" max="2" step="0.01" value="0.8">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Rate</div>
+            <div class="control-value" id="voiceRateVal">0.90</div>
+            <input type="range" id="voiceRateSlider" min="0.1" max="3" step="0.01" value="0.9">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Stutter</div>
+            <div class="control-value" id="stutterVal">0.30</div>
+            <input type="range" id="stutterSlider" min="0" max="1" step="0.01" value="0.3">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Dropout</div>
+            <div class="control-value" id="dropoutVal">0.20</div>
+            <input type="range" id="dropoutSlider" min="0" max="1" step="0.01" value="0.2">
+          </div>
+        </div>
+
+        <div class="formant-toggle-row">
+          <button id="formantToggleBtn">FORMANT ▾</button>
+        </div>
+
+        <div id="formantPanel" style="display:none">
+          <div class="formant-divider"></div>
+          <div class="voice-controls">
+            <div class="control-group">
+              <div class="control-label">F1</div>
+              <div class="control-value" id="f1Val">640Hz</div>
+              <input type="range" id="f1Slider" min="200" max="900" step="10" value="640">
+            </div>
+            <div class="control-group">
+              <div class="control-label">F2</div>
+              <div class="control-value" id="f2Val">1200Hz</div>
+              <input type="range" id="f2Slider" min="800" max="2500" step="10" value="1200">
+            </div>
+            <div class="control-group">
+              <div class="control-label">Formant Vol</div>
+              <div class="control-value" id="fVolVal">60</div>
+              <input type="range" id="fVolSlider" min="0" max="100" step="1" value="60">
+            </div>
+          </div>
+          <div class="vowel-presets">
+            <div class="voice-mode-label">VOWEL</div>
+            <button class="vowel-btn" data-f1="800" data-f2="1200">AH</button>
+            <button class="vowel-btn" data-f1="600" data-f2="1800">EH</button>
+            <button class="vowel-btn" data-f1="400" data-f2="2000">IH</button>
+            <button class="vowel-btn" data-f1="500" data-f2="900">OH</button>
+            <button class="vowel-btn" data-f1="300" data-f2="2300">EE</button>
+            <button class="vowel-btn" data-f1="640" data-f2="1200">UH</button>
+            <button class="vowel-btn" data-f1="700" data-f2="1000">AW</button>
+          </div>
+          <div class="voice-controls">
+            <div class="control-group">
+              <div class="control-label">Detune</div>
+              <div class="control-value" id="detuneVal">+7st</div>
+              <input type="range" id="detuneSlider" min="-12" max="12" step="1" value="7">
+            </div>
+            <div class="control-group">
+              <div class="control-label">Drift</div>
+              <div class="control-value" id="driftVal">30</div>
+              <input type="range" id="driftSlider" min="0" max="100" step="1" value="30">
+            </div>
+          </div>
+        </div>
+
+        <div class="voice-transport">
+          <button id="speakBtn">SPEAK</button>
+          <div class="voice-readout" id="voiceReadout">—</div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <!-- Twister Moves -->
+        <div class="voice-header">
+          <div class="voice-title">TWISTER MOVES</div>
+          <button id="loadWavBtn">LOAD</button>
+        </div>
+
+        <div class="voice-controls">
+          <div class="control-group">
+            <div class="control-label">Gain</div>
+            <div class="control-value" id="wavGainVal">3.0x</div>
+            <input type="range" id="wavGainSlider" min="1" max="8" step="0.1" value="3">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Radio</div>
+            <div class="control-value" id="wavRadioVal">0</div>
+            <input type="range" id="wavRadioSlider" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Ring Freq</div>
+            <div class="control-value" id="wavRingFreqVal">80Hz</div>
+            <input type="range" id="wavRingFreqSlider" min="1" max="2000" step="1" value="80">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Ring Mix</div>
+            <div class="control-value" id="wavRingMixVal">0</div>
+            <input type="range" id="wavRingMixSlider" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Detune</div>
+            <div class="control-value" id="wavDetuneVal">0¢</div>
+            <input type="range" id="wavDetuneSlider" min="0" max="50" step="1" value="0">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Crackle</div>
+            <div class="control-value" id="wavCrackleVal">0</div>
+            <input type="range" id="wavCrackleSlider" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Crackle Echo</div>
+            <div class="control-value" id="wavCrackleEchoVal">0</div>
+            <input type="range" id="wavCrackleEchoSlider" min="0" max="100" step="1" value="0">
+          </div>
+          <div class="control-group">
+            <div class="control-label">Echo Rate</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="control-value" id="wavEchoRateVal">110ms</div>
+              <button id="echoSyncBtn">SYNC</button>
+            </div>
+            <input type="range" id="wavEchoRateSlider" min="10" max="500" step="5" value="110">
+          </div>
+        </div>
+
+        <div class="voice-transport">
+          <button id="spinBtn" disabled>SPIN</button>
+          <div class="voice-readout" id="wavReadout">—</div>
+        </div>
+
+      </div><!-- /right-panel -->
+    </div><!-- /main-grid -->
+  </div>
+
+  <script>
+    let ctx, masterGain, analyser, globalBandpass;
+    let scanning = false;
+    let scanTimer = null;
+    let dwellTimer = null;
+    let direction = 1;
+    let freqPos = 88.1;
+    let activeNodes = [];
+    let animFrame = null;
+
+    const VOWELS = [
+      { f1: 800, f2: 1200 },
+      { f1: 600, f2: 1800 },
+      { f1: 400, f2: 2000 },
+      { f1: 500, f2: 900  },
+      { f1: 640, f2: 1200 },
+      { f1: 300, f2: 2300 },
+      { f1: 700, f2: 1000 },
+    ];
+
+    const playBtn     = document.getElementById('playBtn');
+    const dirBtn      = document.getElementById('dirBtn');
+    const statusText  = document.getElementById('statusText');
+    const freqRate    = document.getElementById('freqRate');
+    const freqValue   = document.getElementById('freqValue');
+    const sweepBar    = document.getElementById('sweepBar');
+    const canvas      = document.getElementById('waveform');
+    const rateSlider  = document.getElementById('rateSlider');
+    const filterSlider= document.getElementById('filterSlider');
+    const volSlider   = document.getElementById('volSlider');
+    const rateVal     = document.getElementById('rateVal');
+    const filterVal   = document.getElementById('filterVal');
+    const volVal      = document.getElementById('volVal');
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function makePinkNoise(sampleRate, duration) {
+      const len = Math.floor(sampleRate * duration);
+      const buf = ctx.createBuffer(1, len, sampleRate);
+      const data = buf.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179;
+        b1 = 0.99332 * b1 + w * 0.0750759;
+        b2 = 0.96900 * b2 + w * 0.1538520;
+        data[i] = (b0 + b1 + b2 + w * 0.5362) * 0.11;
+      }
+      return buf;
+    }
+
+    function makeWhiteNoise(sampleRate, duration) {
+      const len = Math.floor(sampleRate * duration);
+      const buf = ctx.createBuffer(1, len, sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      return buf;
+    }
+
+    function stopActive() {
+      activeNodes.forEach(node => {
+        try { node.stop(); } catch(e) {}
+        try { node.disconnect(); } catch(e) {}
+      });
+      activeNodes = [];
+    }
+
+    function playSegment() {
+      if (!scanning) return;
+
+      stopActive();
+
+      const dwellMs = parseInt(rateSlider.value);
+      const dwell = dwellMs / 1000;
+      const now = ctx.currentTime;
+
+      // Segment gain with 6ms attack, release at dwell end
+      const segmentGain = ctx.createGain();
+      segmentGain.gain.setValueAtTime(0, now);
+      segmentGain.gain.linearRampToValueAtTime(1, now + 0.006);
+      segmentGain.gain.linearRampToValueAtTime(0, now + dwell);
+      segmentGain.connect(globalBandpass);
+      activeNodes.push(segmentGain);
+
+      // Pink noise through HP filter
+      const pinkBuf = makePinkNoise(ctx.sampleRate, dwell + 0.05);
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = pinkBuf;
+      noiseSource.start(now);
+
+      const hpFilter = ctx.createBiquadFilter();
+      hpFilter.type = 'highpass';
+      hpFilter.frequency.value = rand(200, 800);
+
+      noiseSource.connect(hpFilter);
+      hpFilter.connect(segmentGain);
+      activeNodes.push(noiseSource, hpFilter);
+
+      // Voice fragment — 12% chance
+      if (Math.random() < 0.12) {
+        const vowelA = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+        const vowelB = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+
+        const vBuf = makeWhiteNoise(ctx.sampleRate, dwell + 0.05);
+        const vSource = ctx.createBufferSource();
+        vSource.buffer = vBuf;
+        vSource.start(now);
+
+        const vHp = ctx.createBiquadFilter();
+        vHp.type = 'highpass';
+        vHp.frequency.value = 80;
+        vSource.connect(vHp);
+
+        const f1 = ctx.createBiquadFilter();
+        f1.type = 'bandpass';
+        f1.frequency.setValueAtTime(vowelA.f1, now);
+        f1.frequency.linearRampToValueAtTime(vowelB.f1, now + dwell * 0.7);
+        f1.Q.value = rand(4, 9);
+
+        const f2 = ctx.createBiquadFilter();
+        f2.type = 'bandpass';
+        f2.frequency.setValueAtTime(vowelA.f2, now);
+        f2.frequency.linearRampToValueAtTime(vowelB.f2, now + dwell * 0.6);
+        f2.Q.value = rand(5, 12);
+
+        const f1Gain = ctx.createGain();
+        f1Gain.gain.value = 0.5;
+        const f2Gain = ctx.createGain();
+        f2Gain.gain.value = 0.5;
+
+        const mixGain = ctx.createGain();
+        mixGain.gain.value = rand(0.3, 0.55);
+
+        vHp.connect(f1);
+        vHp.connect(f2);
+        f1.connect(f1Gain);
+        f2.connect(f2Gain);
+        f1Gain.connect(mixGain);
+        f2Gain.connect(mixGain);
+        mixGain.connect(segmentGain);
+
+        activeNodes.push(vSource, vHp, f1, f2, f1Gain, f2Gain, mixGain);
+
+        // Consonant burst — 50% chance, fires at segment start
+        if (Math.random() < 0.5) {
+          const cBuf = makeWhiteNoise(ctx.sampleRate, 0.04);
+          const cSource = ctx.createBufferSource();
+          cSource.buffer = cBuf;
+          cSource.start(now);
+
+          const cHp = ctx.createBiquadFilter();
+          cHp.type = 'highpass';
+          cHp.frequency.value = rand(2000, 5000);
+
+          const cGain = ctx.createGain();
+          cGain.gain.value = rand(0.1, 0.25);
+
+          cSource.connect(cHp);
+          cHp.connect(cGain);
+          cGain.connect(segmentGain);
+
+          activeNodes.push(cSource, cHp, cGain);
+        }
+      }
+
+      // Randomize global bandpass around user value
+      const userFreq = parseInt(filterSlider.value);
+      globalBandpass.frequency.setValueAtTime(userFreq + rand(-200, 200), now);
+      globalBandpass.Q.value = rand(0.5, 1.5);
+
+      // Advance frequency dial
+      freqPos += direction * 0.2;
+      if (freqPos > 107.9) freqPos = 88.1;
+      if (freqPos < 88.1)  freqPos = 107.9;
+      freqValue.textContent = freqPos.toFixed(1) + ' MHz';
+      freqRate.textContent  = 'FM   ' + dwellMs + 'ms';
+
+      // Sweep progress bar
+      if (dwellTimer) clearInterval(dwellTimer);
+      sweepBar.style.width = '0%';
+      let elapsed = 0;
+      dwellTimer = setInterval(() => {
+        elapsed += 40;
+        const pct = Math.min(elapsed / dwellMs * 100, 100);
+        sweepBar.style.width = pct + '%';
+        if (pct >= 100) clearInterval(dwellTimer);
+      }, 40);
+
+      scanTimer = setTimeout(playSegment, dwellMs);
+    }
+
+    function startViz() {
+      const ctx2d = canvas.getContext('2d');
+
+      function draw() {
+        requestAnimationFrame(draw);
+        canvas.width = canvas.offsetWidth;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx2d.fillStyle = '#0a0a0a';
+        ctx2d.fillRect(0, 0, w, h);
+
+        ctx2d.beginPath();
+        ctx2d.strokeStyle = 'rgba(255,51,0,0.15)';
+        ctx2d.lineWidth = 1;
+        ctx2d.moveTo(0, h / 2);
+        ctx2d.lineTo(w, h / 2);
+        ctx2d.stroke();
+
+        if (scanning && analyser) {
+          const bufLen = analyser.frequencyBinCount;
+          const data   = new Uint8Array(bufLen);
+          analyser.getByteTimeDomainData(data);
+
+          ctx2d.beginPath();
+          ctx2d.strokeStyle = 'rgba(200,255,0,0.8)';
+          ctx2d.lineWidth = 1.5;
+          const sliceW = w / bufLen;
+          let x = 0;
+          for (let i = 0; i < bufLen; i++) {
+            const y = (data[i] / 128.0) * (h / 2);
+            if (i === 0) ctx2d.moveTo(x, y);
+            else         ctx2d.lineTo(x, y);
+            x += sliceW;
+          }
+          ctx2d.stroke();
+        } else {
+          ctx2d.beginPath();
+          ctx2d.strokeStyle = 'rgba(200,255,0,0.2)';
+          ctx2d.lineWidth = 1.5;
+          ctx2d.moveTo(0, h / 2);
+          ctx2d.lineTo(w, h / 2);
+          ctx2d.stroke();
+        }
+      }
+
+      draw();
+    }
+
+    function startScan() {
+      if (!ctx) {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+
+      masterGain = ctx.createGain();
+      masterGain.gain.value = parseInt(volSlider.value) / 100;
+
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+
+      globalBandpass = ctx.createBiquadFilter();
+      globalBandpass.type = 'bandpass';
+      globalBandpass.frequency.value = parseInt(filterSlider.value);
+      globalBandpass.Q.value = 1;
+
+      globalBandpass.connect(masterGain);
+      masterGain.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      scanning = true;
+      playBtn.textContent = 'STOP';
+      playBtn.classList.add('active');
+      statusText.textContent = 'SCANNING';
+
+      playSegment();
+    }
+
+    function stopScan() {
+      scanning = false;
+      if (scanTimer)  { clearTimeout(scanTimer);   scanTimer  = null; }
+      if (dwellTimer) { clearInterval(dwellTimer); dwellTimer = null; }
+      stopActive();
+      speechSynthesis.cancel();
+      sweepBar.style.width = '0%';
+      playBtn.textContent = 'PLAY';
+      playBtn.classList.remove('active');
+      statusText.textContent = 'READY';
+    }
+
+    // ── Voice inject ──────────────────────────────────────────────────────────
+
+    const BODY_PARTS = ['left hand','right hand','left foot','right foot'];
+    const COLORS     = ['red','blue','yellow','green'];
+
+    const TWISTER_SENTENCES = [
+      'left hand red','left hand blue','left hand yellow','left hand green',
+      'right hand red','right hand blue','right hand yellow','right hand green',
+      'left foot red','left foot blue','left foot yellow','left foot green',
+      'right foot red','right foot blue','right foot yellow','right foot green',
+    ];
+
+    const SIGNAL_PHRASES = [
+      'Signal Beyond Clearance',
+      'Frequency Finds You',
+      'Classified Static Speaks',
+      'Numbers Never Lie',
+      'Tune In Deep',
+      'Beyond The Veil',
+      'Astral Asset Active',
+      'Ghost In Bandwidth',
+      'Decode The Unknown',
+      'Havana Still Hums',
+      'They\'re Always Listening',
+      'Cleared For Contact',
+      'Numbers Station Live',
+      'Project Gateway Open',
+      'Mind Over Signal',
+      'Redacted Transmission Incoming',
+      'Paranormal Goes Official',
+      'Static Knows Things',
+      'Disclosure Is Scanning',
+      'Remote View Now',
+      'The Tape Rolls',
+      'Intel From Elsewhere',
+      'Burn Before Hearing',
+      'Consciousness Is Classified',
+      'The Ether Speaks',
+      'Above Top Secret',
+      'Signal Finds Signal',
+      'Eyes Remote Open',
+      'Nowhere Broadcasts Everything',
+      'Tune Past Clearance',
+    ];
+
+    const TWISTER_FRAGMENTS = [
+      'spin again','hold position','do not move','wrong hand','wrong foot',
+      'reset the board','too close','switch sides','balance failing',
+      'floor is listening','the mat remembers','next color',
+    ];
+
+    const speakBtn        = document.getElementById('speakBtn');
+    const modeSelect      = document.getElementById('modeSelect');
+    const voiceSelect     = document.getElementById('voiceSelect');
+
+    let voices = [];
+
+    const voiceNameBtn     = document.getElementById('voiceNameBtn');
+    const voiceSelectRow   = document.getElementById('voiceSelectRow');
+    const voiceSelectClose = document.getElementById('voiceSelectClose');
+
+    function updateVoiceNameBtn() {
+      const v = voices[voiceSelect.value];
+      voiceNameBtn.textContent = v ? v.name : '—';
+    }
+
+    function populateVoices() {
+      voices = speechSynthesis.getVoices();
+      if (!voices.length) return;
+      const prev = voiceSelect.value;
+      voiceSelect.innerHTML = '';
+      voices.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = v.name + ' — ' + v.lang;
+        voiceSelect.appendChild(opt);
+      });
+      const prevMatch = voices.findIndex((v, i) => String(i) === prev);
+      if (prevMatch >= 0) {
+        voiceSelect.value = prevMatch;
+      } else {
+        const wobbleIdx = voices.findIndex(v => v.name.toLowerCase().includes('wobble'));
+        const enIdx     = voices.findIndex(v => v.lang.startsWith('en'));
+        voiceSelect.value = wobbleIdx >= 0 ? wobbleIdx : (enIdx >= 0 ? enIdx : 0);
+      }
+      updateVoiceNameBtn();
+    }
+
+    voiceNameBtn.addEventListener('click', () => {
+      voiceSelectRow.style.display = 'flex';
+    });
+
+    voiceSelectClose.addEventListener('click', () => {
+      voiceSelectRow.style.display = 'none';
+    });
+
+    voiceSelect.addEventListener('change', updateVoiceNameBtn);
+
+    const formantToggleBtn = document.getElementById('formantToggleBtn');
+    const formantPanel     = document.getElementById('formantPanel');
+    formantToggleBtn.addEventListener('click', () => {
+      const open = formantPanel.style.display !== 'none';
+      formantPanel.style.display = open ? 'none' : 'block';
+      formantToggleBtn.textContent = open ? 'FORMANT ▾' : 'FORMANT ▴';
+    });
+
+    speechSynthesis.onvoiceschanged = populateVoices;
+    populateVoices();
+    const pitchSlider     = document.getElementById('pitchSlider');
+    const voiceRateSlider = document.getElementById('voiceRateSlider');
+    const stutterSlider   = document.getElementById('stutterSlider');
+    const dropoutSlider   = document.getElementById('dropoutSlider');
+    const f1Slider        = document.getElementById('f1Slider');
+    const f2Slider        = document.getElementById('f2Slider');
+    const fVolSlider      = document.getElementById('fVolSlider');
+    const detuneSlider    = document.getElementById('detuneSlider');
+    const driftSlider     = document.getElementById('driftSlider');
+    const pitchVal        = document.getElementById('pitchVal');
+    const voiceRateVal    = document.getElementById('voiceRateVal');
+    const stutterVal      = document.getElementById('stutterVal');
+    const dropoutVal      = document.getElementById('dropoutVal');
+    const f1Val           = document.getElementById('f1Val');
+    const f2Val           = document.getElementById('f2Val');
+    const fVolVal         = document.getElementById('fVolVal');
+    const detuneVal       = document.getElementById('detuneVal');
+    const driftVal        = document.getElementById('driftVal');
+    const voiceReadout    = document.getElementById('voiceReadout');
+    const vowelBtns       = document.querySelectorAll('.vowel-btn');
+
+    let formantNodes = [];
+    let driftF1 = 640;
+    let driftF2 = 1200;
+
+    function pickRand(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function cutUp(sentences) {
+      const src = pickRand(sentences).split(' ');
+      const count = 1 + Math.floor(Math.random() * src.length);
+      return Array.from({length: count}, () => pickRand(src)).join(' ');
+    }
+
+    function generatePhrase() {
+      const mode = modeSelect.value;
+      if (mode === 'spinner')   return pickRand(BODY_PARTS) + ' ' + pickRand(COLORS);
+      if (mode === 'sentences') return pickRand(TWISTER_SENTENCES);
+      if (mode === 'fragments') return pickRand(TWISTER_FRAGMENTS);
+      if (mode === 'signal')    return pickRand(SIGNAL_PHRASES);
+      if (mode === 'cut-up')    return cutUp(Math.random() < 0.5 ? TWISTER_SENTENCES : SIGNAL_PHRASES);
+      // mixed
+      const r = Math.random();
+      if (r < 0.3)  return pickRand(SIGNAL_PHRASES);
+      if (r < 0.55) return pickRand(BODY_PARTS) + ' ' + pickRand(COLORS);
+      if (r < 0.7)  return pickRand(TWISTER_SENTENCES);
+      if (r < 0.85) return cutUp(Math.random() < 0.5 ? TWISTER_SENTENCES : SIGNAL_PHRASES);
+      return pickRand(TWISTER_FRAGMENTS);
+    }
+
+    function applyDropout(phrase) {
+      const prob = parseFloat(dropoutSlider.value);
+      if (Math.random() > prob) return phrase;
+      const parts = phrase.split(' ');
+      return parts.slice(0, 1 + Math.floor(Math.random() * parts.length)).join(' ');
+    }
+
+    function applyStutter(phrase) {
+      const prob = parseFloat(stutterSlider.value);
+      if (Math.random() > prob) return phrase;
+      const parts = phrase.split(' ');
+      const word  = pickRand(parts);
+      const reps  = 2 + Math.floor(Math.random() * 6);
+      const block = Array(reps).fill(word).join(' ');
+      return Math.random() < 0.5 ? block + ' ' + phrase : phrase + ' ' + block;
+    }
+
+    function stopFormant() {
+      formantNodes.forEach(n => { try { n.stop(); } catch(e) {} try { n.disconnect(); } catch(e) {} });
+      formantNodes = [];
+    }
+
+    function makeNoisePath(durationSec, f1Freq, f2Freq, now) {
+      const bufLen = Math.ceil(ctx.sampleRate * (durationSec + 0.05));
+      const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data   = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 80;
+
+      const bp1 = ctx.createBiquadFilter();
+      bp1.type = 'bandpass';
+      bp1.frequency.value = f1Freq;
+      bp1.Q.value = rand(5, 10);
+
+      const bp2 = ctx.createBiquadFilter();
+      bp2.type = 'bandpass';
+      bp2.frequency.value = f2Freq;
+      bp2.Q.value = rand(6, 12);
+
+      const mix = ctx.createGain();
+      mix.gain.value = 0.5;
+
+      src.connect(hp);
+      hp.connect(bp1); hp.connect(bp2);
+      bp1.connect(mix); bp2.connect(mix);
+
+      src.start(now);
+      src.stop(now + durationSec + 0.05);
+
+      return { out: mix, nodes: [src, hp, bp1, bp2, mix] };
+    }
+
+    function fireFormantBurst(durationSec) {
+      if (!ctx) return;
+      stopFormant();
+
+      const drift    = parseFloat(driftSlider.value) / 100;
+      driftF1 += rand(-1, 1) * drift * 180;
+      driftF2 += rand(-1, 1) * drift * 280;
+      driftF1 = Math.max(200, Math.min(900,  driftF1));
+      driftF2 = Math.max(800, Math.min(2500, driftF2));
+
+      const semitones = parseFloat(detuneSlider.value);
+      const ratio     = Math.pow(2, semitones / 12);
+      const fVol      = parseFloat(fVolSlider.value) / 100;
+      const now       = ctx.currentTime;
+
+      // shared envelope
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0, now);
+      env.gain.linearRampToValueAtTime(fVol, now + 0.015);
+      env.gain.setValueAtTime(fVol, now + durationSec * 0.75);
+      env.gain.linearRampToValueAtTime(0, now + durationSec);
+      env.connect(masterGain);
+
+      // base path at drifted F1/F2
+      const base   = makeNoisePath(durationSec, driftF1, driftF2, now);
+      base.out.connect(env);
+
+      // doubled path at F1/F2 shifted by semitones
+      const shifted = makeNoisePath(
+        durationSec,
+        Math.max(200, Math.min(900,  driftF1 * ratio)),
+        Math.max(800, Math.min(2500, driftF2 * ratio)),
+        now
+      );
+      shifted.out.connect(env);
+
+      formantNodes = [...base.nodes, ...shifted.nodes, env];
+    }
+
+    function speakPhrase() {
+      if (!ctx) {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = parseInt(volSlider.value) / 100;
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        masterGain.connect(analyser);
+        analyser.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+
+      speechSynthesis.cancel();
+      driftF1 = parseFloat(f1Slider.value);
+      driftF2 = parseFloat(f2Slider.value);
+
+      let phrase = generatePhrase();
+      phrase = applyDropout(phrase);
+      phrase = applyStutter(phrase);
+      if (!phrase.trim()) return;
+
+      const utt = new SpeechSynthesisUtterance(phrase);
+      if (voices[voiceSelect.value]) utt.voice = voices[voiceSelect.value];
+      utt.pitch  = Math.max(0.1, Math.min(2, parseFloat(pitchSlider.value) + rand(-0.1, 0.1)));
+      utt.rate   = Math.max(0.1, Math.min(3, parseFloat(voiceRateSlider.value) + rand(-0.1, 0.1)));
+      utt.volume = 0.8;
+
+      utt.onboundary = (e) => {
+        if (e.name !== 'word') return;
+        const word = phrase.substring(e.charIndex).split(/\s/)[0];
+        const dur = Math.max(0.12, (word.length * 0.065) / utt.rate);
+        fireFormantBurst(dur);
+      };
+
+      speechSynthesis.speak(utt);
+      utt.onend = stopFormant;
+
+      voiceReadout.innerHTML = '<span>' + phrase + '</span>';
+    }
+
+    speakBtn.addEventListener('click', speakPhrase);
+
+    f1Slider.addEventListener('input',       () => { f1Val.textContent       = f1Slider.value + 'Hz'; });
+    f2Slider.addEventListener('input',       () => { f2Val.textContent       = f2Slider.value + 'Hz'; });
+    fVolSlider.addEventListener('input',     () => { fVolVal.textContent     = fVolSlider.value; });
+    detuneSlider.addEventListener('input', () => {
+      const st = parseInt(detuneSlider.value);
+      detuneVal.textContent = (st >= 0 ? '+' : '') + st + 'st';
+    });
+    driftSlider.addEventListener('input', () => { driftVal.textContent = driftSlider.value; });
+
+    vowelBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        f1Slider.value = btn.dataset.f1;
+        f2Slider.value = btn.dataset.f2;
+        f1Val.textContent = btn.dataset.f1 + 'Hz';
+        f2Val.textContent = btn.dataset.f2 + 'Hz';
+        vowelBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    pitchSlider.addEventListener('input',     () => { pitchVal.textContent     = parseFloat(pitchSlider.value).toFixed(2); });
+    voiceRateSlider.addEventListener('input', () => { voiceRateVal.textContent = parseFloat(voiceRateSlider.value).toFixed(2); });
+    stutterSlider.addEventListener('input',   () => { stutterVal.textContent   = parseFloat(stutterSlider.value).toFixed(2); });
+    dropoutSlider.addEventListener('input',   () => { dropoutVal.textContent   = parseFloat(dropoutSlider.value).toFixed(2); });
+
+    // ── Main controls ──────────────────────────────────────────────────────────
+
+    playBtn.addEventListener('click', () => {
+      if (scanning) stopScan();
+      else          startScan();
+    });
+
+    dirBtn.addEventListener('click', () => {
+      direction *= -1;
+      dirBtn.textContent = direction === 1 ? 'FWD' : 'REV';
+    });
+
+
+    filterSlider.addEventListener('input', () => {
+      filterVal.textContent = filterSlider.value + 'Hz';
+      if (globalBandpass) {
+        globalBandpass.frequency.setTargetAtTime(
+          parseInt(filterSlider.value),
+          ctx.currentTime,
+          0.05
+        );
+      }
+    });
+
+    volSlider.addEventListener('input', () => {
+      volVal.textContent = volSlider.value;
+      if (masterGain) masterGain.gain.value = parseInt(volSlider.value) / 100;
+    });
+
+    // ── WAV player ────────────────────────────────────────────────────────────
+
+    const DIRECTIONS  = ['left', 'right'];
+    const LIMBS       = ['hand', 'foot'];
+    const WORDS       = [...DIRECTIONS, ...LIMBS, ...COLORS];
+    const VOICE_DIRS  = [
+      { dir: 'voice-01', suffix: ''   },
+      { dir: 'voice-02', suffix: '-2' },
+    ];
+
+    const wavBuffers        = {};
+    const loadWavBtn        = document.getElementById('loadWavBtn');
+    const spinBtn           = document.getElementById('spinBtn');
+    const wavReadout        = document.getElementById('wavReadout');
+    const wavGainSlider     = document.getElementById('wavGainSlider');
+    const wavGainVal        = document.getElementById('wavGainVal');
+    const wavRadioSlider    = document.getElementById('wavRadioSlider');
+    const wavRingFreqSlider = document.getElementById('wavRingFreqSlider');
+    const wavRingMixSlider  = document.getElementById('wavRingMixSlider');
+    const wavDetuneSlider   = document.getElementById('wavDetuneSlider');
+    const wavCrackleSlider  = document.getElementById('wavCrackleSlider');
+    const wavRadioVal       = document.getElementById('wavRadioVal');
+    const wavRingFreqVal    = document.getElementById('wavRingFreqVal');
+    const wavRingMixVal     = document.getElementById('wavRingMixVal');
+    const wavDetuneVal      = document.getElementById('wavDetuneVal');
+    const wavCrackleVal          = document.getElementById('wavCrackleVal');
+    const wavCrackleEchoSlider   = document.getElementById('wavCrackleEchoSlider');
+    const wavCrackleEchoVal      = document.getElementById('wavCrackleEchoVal');
+    const wavEchoRateSlider      = document.getElementById('wavEchoRateSlider');
+    const wavEchoRateVal         = document.getElementById('wavEchoRateVal');
+    const echoSyncBtn            = document.getElementById('echoSyncBtn');
+    let echoSynced = false;
+
+    // FX nodes
+    let wavRadioHP, wavRadioLP, wavBoost, wavDryGain, wavRingGain, wavRingWet;
+    let currentWavSrcs = [];
+    let currentWavBtn  = null;
+    let currentRingOsc = null;
+    let crackleNodes   = [];
+
+    function ensureCtx() {
+      if (!ctx) {
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = ctx.createGain();
+        masterGain.gain.value = parseInt(volSlider.value) / 100;
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        masterGain.connect(analyser);
+        analyser.connect(ctx.destination);
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+    }
+
+    function buildWavFX() {
+      // input gain boost
+      wavBoost = ctx.createGain();
+      wavBoost.gain.value = parseFloat(wavGainSlider.value);
+
+      // radio bandpass: HP + LP in series
+      wavRadioHP = ctx.createBiquadFilter();
+      wavRadioHP.type = 'highpass';
+      wavRadioLP = ctx.createBiquadFilter();
+      wavRadioLP.type = 'lowpass';
+      setRadioFilter(parseInt(wavRadioSlider.value));
+      wavBoost.connect(wavRadioHP);
+      wavRadioHP.connect(wavRadioLP);
+
+      // dry path out
+      wavDryGain = ctx.createGain();
+      wavDryGain.gain.value = 1;
+      wavRadioLP.connect(wavDryGain);
+      wavDryGain.connect(masterGain);
+
+      // ring mod gain nodes (persistent); oscillator created per-play
+      wavRingGain = ctx.createGain();
+      wavRingGain.gain.value = 0;
+      wavRingWet  = ctx.createGain();
+      wavRingWet.gain.value = 0;
+      wavRadioLP.connect(wavRingGain);
+      wavRingGain.connect(wavRingWet);
+      wavRingWet.connect(masterGain);
+    }
+
+    function setRadioFilter(amount) {
+      // amount 0–100: 0 = wide open, 100 = tight walkie-talkie
+      const hp = 80  + amount * 6.2;   // 80Hz → 700Hz
+      const lp = 9000 - amount * 67;   // 9000Hz → 2300Hz
+      if (wavRadioHP) wavRadioHP.frequency.value = hp;
+      if (wavRadioLP) wavRadioLP.frequency.value = lp;
+    }
+
+    async function loadWavs() {
+      ensureCtx();
+      if (!wavRadioHP) buildWavFX();
+      loadWavBtn.textContent = 'LOADING...';
+      loadWavBtn.disabled = true;
+
+      let loaded = 0;
+      const total = WORDS.length * VOICE_DIRS.length;
+
+      await Promise.all(VOICE_DIRS.flatMap(({ dir, suffix }) =>
+        WORDS.map(async word => {
+          const key = dir + '/' + word;
+          try {
+            const res = await fetch(`wav/${dir}/${word}${suffix}.wav`);
+            const ab  = await res.arrayBuffer();
+            wavBuffers[key] = await ctx.decodeAudioData(ab);
+            loaded++;
+          } catch(e) {
+            console.warn('failed to load', key, e);
+          }
+        })
+      ));
+
+      loadWavBtn.textContent = `LOADED (${loaded}/${total})`;
+      if (loaded > 0) spinBtn.disabled = false;
+    }
+
+    function stopCrackle() {
+      crackleNodes.forEach(n => { try { n.stop(); } catch(e) {} try { n.disconnect(); } catch(e) {} });
+      crackleNodes = [];
+    }
+
+    function scheduleCrackle(totalDur) {
+      stopCrackle();
+      const amount  = parseInt(wavCrackleSlider.value) / 100;
+      if (amount === 0) return;
+
+      const now     = ctx.currentTime;
+      const echoMix = parseInt(wavCrackleEchoSlider.value) / 100;
+
+      // single continuous noise source
+      const bufLen = Math.ceil(ctx.sampleRate * (totalDur + 0.5));
+      const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data   = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 3500;
+
+      // envelope gain automation
+      const envGain = ctx.createGain();
+      envGain.gain.setValueAtTime(0, now);
+      let t = now;
+      while (t < now + totalDur) {
+        const stepDur = 0.008 + Math.random() * 0.022;
+        const target  = Math.random() < 0.28 ? Math.random() * amount * 0.38 : 0;
+        envGain.gain.linearRampToValueAtTime(target, t + 0.002);
+        t += stepDur;
+      }
+      envGain.gain.linearRampToValueAtTime(0, now + totalDur);
+
+      src.connect(hp);
+      hp.connect(envGain);
+      envGain.connect(masterGain);
+
+      // echo path: delay + feedback loop
+      if (echoMix > 0) {
+        const echoRateMs   = echoSynced ? parseInt(rateSlider.value) : parseInt(wavEchoRateSlider.value);
+        const echoDelay    = ctx.createDelay(2.0);
+        echoDelay.delayTime.value = Math.min(echoRateMs / 1000, 2.0);
+
+        const echoFeedback = ctx.createGain();
+        echoFeedback.gain.value = 0.45;
+
+        const echoWet      = ctx.createGain();
+        echoWet.gain.value = echoMix * 0.7;
+
+        envGain.connect(echoDelay);
+        echoDelay.connect(echoFeedback);
+        echoFeedback.connect(echoDelay);
+        echoDelay.connect(echoWet);
+        echoWet.connect(masterGain);
+
+        crackleNodes = [src, hp, envGain, echoDelay, echoFeedback, echoWet];
+      } else {
+        crackleNodes = [src, hp, envGain];
+      }
+
+      src.start(now);
+      src.stop(now + totalDur + 0.5);
+    }
+
+    function stopCurrent() {
+      currentWavSrcs.forEach(s => { try { s.stop(); } catch(e) {} });
+      currentWavSrcs = [];
+      if (currentRingOsc) { try { currentRingOsc.stop(); } catch(e) {} currentRingOsc = null; }
+      if (currentWavBtn) { currentWavBtn.classList.remove('playing'); currentWavBtn = null; }
+      stopCrackle();
+    }
+
+    function scheduleSequence(buffers) {
+      stopCurrent();
+      ensureCtx();
+      if (!wavRadioHP) buildWavFX();
+
+      const spread = parseInt(wavDetuneSlider.value);
+      let t = ctx.currentTime;
+      buffers.forEach(buf => {
+        [-spread, +spread].forEach(cents => {
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.detune.value = cents;
+          src.connect(wavBoost);
+          src.start(t);
+          currentWavSrcs.push(src);
+        });
+        t += buf.duration;
+      });
+
+      const totalDur = buffers.reduce((sum, b) => sum + b.duration, 0);
+      scheduleCrackle(totalDur);
+
+      const ringOsc  = ctx.createOscillator();
+      ringOsc.type = 'sine';
+      ringOsc.frequency.value = parseFloat(wavRingFreqSlider.value);
+      ringOsc.connect(wavRingGain.gain);
+      ringOsc.start(ctx.currentTime);
+      ringOsc.stop(ctx.currentTime + totalDur);
+      currentRingOsc = ringOsc;
+
+      // clear state when done
+      const last = currentWavSrcs[currentWavSrcs.length - 1];
+      last.onended = () => { currentWavSrcs = []; currentRingOsc = null; };
+    }
+
+    function pickVoiceBuf(word) {
+      const v = VOICE_DIRS[Math.floor(Math.random() * VOICE_DIRS.length)];
+      return wavBuffers[v.dir + '/' + word] || null;
+    }
+
+    function playComposed() {
+      const dir   = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+      const limb  = LIMBS[Math.floor(Math.random() * LIMBS.length)];
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const bufs  = [pickVoiceBuf(dir), pickVoiceBuf(limb), pickVoiceBuf(color)];
+      if (bufs.some(b => !b)) return;
+      scheduleSequence(bufs);
+      wavReadout.innerHTML = '<span>' + dir + ' ' + limb + ' ' + color + '</span>';
+    }
+
+    loadWavBtn.addEventListener('click', loadWavs);
+    spinBtn.addEventListener('click', playComposed);
+
+    wavGainSlider.addEventListener('input', () => {
+      const v = parseFloat(wavGainSlider.value);
+      wavGainVal.textContent = v.toFixed(1) + 'x';
+      if (wavBoost) wavBoost.gain.value = v;
+    });
+
+    wavRadioSlider.addEventListener('input', () => {
+      const v = parseInt(wavRadioSlider.value);
+      wavRadioVal.textContent = v;
+      setRadioFilter(v);
+    });
+
+    wavRingFreqSlider.addEventListener('input', () => {
+      const v = parseInt(wavRingFreqSlider.value);
+      wavRingFreqVal.textContent = v + 'Hz';
+      if (currentRingOsc) currentRingOsc.frequency.value = v;
+    });
+
+    wavRingMixSlider.addEventListener('input', () => {
+      const v = parseInt(wavRingMixSlider.value);
+      wavRingMixVal.textContent = v;
+      if (wavRingWet) wavRingWet.gain.value = v / 100;
+    });
+
+    wavDetuneSlider.addEventListener('input', () => {
+      const v = parseInt(wavDetuneSlider.value);
+      wavDetuneVal.textContent = '±' + v + '¢';
+    });
+
+    wavCrackleSlider.addEventListener('input', () => {
+      wavCrackleVal.textContent = wavCrackleSlider.value;
+    });
+
+    wavCrackleEchoSlider.addEventListener('input', () => {
+      wavCrackleEchoVal.textContent = wavCrackleEchoSlider.value;
+    });
+
+    wavEchoRateSlider.addEventListener('input', () => {
+      wavEchoRateVal.textContent = wavEchoRateSlider.value + 'ms';
+    });
+
+    echoSyncBtn.addEventListener('click', () => {
+      echoSynced = !echoSynced;
+      echoSyncBtn.classList.toggle('synced', echoSynced);
+      wavEchoRateSlider.disabled = echoSynced;
+      if (echoSynced) {
+        wavEchoRateVal.textContent = rateSlider.value + 'ms (sync)';
+      } else {
+        wavEchoRateVal.textContent = wavEchoRateSlider.value + 'ms';
+      }
+    });
+
+    rateSlider.addEventListener('input', () => {
+      rateVal.textContent  = rateSlider.value + 'ms';
+      freqRate.textContent = 'FM   ' + rateSlider.value + 'ms';
+      if (echoSynced) wavEchoRateVal.textContent = rateSlider.value + 'ms (sync)';
+    });
+
+    startViz();
+  </script>
+</body>
+</html>
