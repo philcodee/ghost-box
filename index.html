@@ -550,8 +550,10 @@
         <div class="transport">
           <button id="playBtn">PLAY</button>
           <button id="dirBtn">FWD</button>
+          <button id="beepBtn" style="color:#888;border-color:#444;font-size:13px;padding:10px 16px">BEEP</button>
           <span class="status-text" id="statusText">READY</span>
         </div>
+        <div style="font-family:monospace;font-size:11px;color:#444;margin-top:6px;letter-spacing:0.05em" id="audioDebug">ctx: none</div>
       </div>
 
       <!-- ── Right: Voice + Twister ── -->
@@ -1675,6 +1677,29 @@
       if (document.visibilityState === 'visible' && ctx && ctx.state === 'suspended') {
         ctx.resume();
       }
+    });
+
+    // ── Debug ─────────────────────────────────────────────────────────────────
+
+    const audioDebug = document.getElementById('audioDebug');
+    function updateDebug(note) {
+      const state = ctx ? ctx.state : 'none';
+      audioDebug.textContent = 'ctx: ' + state + (note ? ' | ' + note : '');
+    }
+    setInterval(updateDebug, 500);
+
+    document.getElementById('beepBtn').addEventListener('click', async () => {
+      await ensureCtx();
+      updateDebug('beep sent');
+      const osc = ctx.createOscillator();
+      const g   = ctx.createGain();
+      osc.frequency.value = 440;
+      g.gain.setValueAtTime(0.4, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.4);
     });
 
     startViz();
