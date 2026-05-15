@@ -1,5 +1,5 @@
 # Ghost Box MK3 — Session Log
-**Last updated:** 2026-05-15
+**Last updated:** 2026-05-15 (mobile fixes)
 
 ---
 
@@ -40,6 +40,15 @@
   - **Radio**: single slider narrows HP+LP simultaneously (80Hz/9kHz wide → 700Hz/2.3kHz tight walkie-talkie)
   - **Ring Mod**: carrier oscillator starts/stops with each WAV playback, frequency 1–2000Hz, wet mix control
   - **Detune**: second buffer source at ±50 cents offset, mixed at −3dB
+
+---
+
+## Mobile fixes (2026-05-15)
+- **Root cause of silence on mobile**: iOS hardware mute/silent switch blocks Web Audio API output entirely; Speech Synthesis routes through a separate audio channel and ignores it. Confirmed via `ctx.state` debug overlay — context was `running` but beep test was silent.
+- **AudioContext async unlock**: all audio-producing functions (`startScan`, `speakPhrase`, `loadWavs`, `scheduleSequence`, `playComposed`) made `async` and now properly `await ctx.resume()` before scheduling nodes. Previously `resume()` was fire-and-forget — nodes were scheduled while the context was still suspended.
+- **iOS silent buffer unlock**: `unlockAudio()` now plays a 1-sample silent `BufferSourceNode` within the first user gesture (`touchstart`). On iOS, `resume()` alone changes the state string but doesn't open the audio hardware gate; playing a buffer does.
+- **Visibility change handler**: `visibilitychange` listener re-resumes the context when the user returns from background, since iOS/Android suspend audio contexts when the page loses focus.
+- **Voice inject default mode**: changed from `spinner` to `signal`.
 
 ---
 
